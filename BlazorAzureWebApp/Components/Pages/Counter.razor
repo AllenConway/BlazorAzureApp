@@ -1,0 +1,36 @@
+﻿@page "/counter"
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+<h2>Counter Values</h2>
+
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>Index</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var value in PagedCounterValues)
+            {
+                <tr>
+                    <td>@value.Index</td>
+                    <td>@value.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-between mt-3">
+    <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@(!CanGoToPreviousPage)">Previous</button>
+    <button class="btn btn-secondary" @onclick="NextPage" disabled="@(!CanGoToNextPage)">Next</button>
+</div>
