@@ -25,6 +25,7 @@ resource "azurerm_app_service_plan" "asp" {
     size = "F1"
   }
   kind = "linux"
+  reserved = true
 }
 
 resource "azurerm_app_service" "app" {
