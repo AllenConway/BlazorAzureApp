@@ -60,23 +60,8 @@ locals {
   current_service_plan_id = local.service_plan_exists ? data.azurerm_service_plan.existing[0].id : azurerm_service_plan.asp[0].id
 }
 
-# Try to get existing web app only if we're sure it might exist
-data "azurerm_linux_web_app" "existing" {
-  count               = local.service_plan_exists ? 1 : 0
-  name                = var.app_service_name
-  resource_group_name = local.resource_group.name
-
-  depends_on = [azurerm_service_plan.asp]
-}
-
-# Simplified locals for existence checks
-locals {
-  web_app_exists = try(data.azurerm_linux_web_app.existing[0].id != "", false)
-}
-
-# Create web app if it doesn't exist
+# Create web app
 resource "azurerm_linux_web_app" "app" {
-  count               = local.web_app_exists ? 0 : 1
   name                = var.app_service_name
   location            = local.resource_group.location
   resource_group_name = local.resource_group.name
@@ -91,10 +76,16 @@ resource "azurerm_linux_web_app" "app" {
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }
+
+  lifecycle {
+    ignore_changes = [
+      app_settings["WEBSITE_RUN_FROM_PACKAGE"]
+    ]
+  }
 }
 
 # Final resource references for outputs
 locals {
   service_plan = local.service_plan_exists ? data.azurerm_service_plan.existing[0] : azurerm_service_plan.asp[0]
-  web_app     = local.web_app_exists ? data.azurerm_linux_web_app.existing[0] : azurerm_linux_web_app.app[0]
+  web_app     = azurerm_linux_web_app.app
 }
