@@ -18,3 +18,8 @@ variable "app_service_name" {
   description = "The name of the App Service"
   type        = string
 }
+
+variable "subscription_id" {
+  description = "The subscription ID for the Azure provider"
+  type        = string
+}
