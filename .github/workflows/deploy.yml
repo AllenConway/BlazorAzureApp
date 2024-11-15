@@ -70,19 +70,6 @@ jobs:
         echo "APP_PLAN_NAME=${APP_PLAN_NAME}" >> $GITHUB_ENV
         echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
 
-    - name: Terraform Import Resources
-      run: |
-        # Import App Service Plan
-        terraform import azurerm_service_plan.asp "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RG_NAME }}/providers/Microsoft.Web/serverFarms/${{ env.APP_PLAN_NAME }}"
-        
-        # Import Web App
-        terraform import azurerm_linux_web_app.app "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RG_NAME }}/providers/Microsoft.Web/sites/${{ env.APP_NAME }}"
-      working-directory: ./terraform
-      env:
-        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-
     - name: Terraform Plan
       run: terraform plan
       working-directory: ./terraform
