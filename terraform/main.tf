@@ -12,32 +12,44 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-data "azurerm_resource_group" "existing_rg" {
-  name = var.resource_group_name
+# Check if resource group exists
+data "azurerm_resource_group" "existing" {
+  count = can(data.azurerm_subscription.current.id) ? 1 : 0  # More reliable existence check
+  name  = var.resource_group_name
 }
 
+data "azurerm_subscription" "current" {}
+
+# Update resource group creation condition
 resource "azurerm_resource_group" "rg" {
-  count    = length(data.azurerm_resource_group.existing_rg.id) == 0 ? 1 : 0
+  count    = can(data.azurerm_resource_group.existing[0].id) ? 0 : 1  # Create only if doesn't exist
   name     = var.resource_group_name
   location = var.location
 }
 
+# Simplified reference to resource group
+locals {
+  resource_group = try(data.azurerm_resource_group.existing[0], azurerm_resource_group.rg[0])
+}
+
+# App service plan using local reference
 resource "azurerm_app_service_plan" "asp" {
   name                = var.app_service_plan_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = local.resource_group.location
+  resource_group_name = local.resource_group.name
   sku {
     tier = "Free"
     size = "F1"
   }
-  kind = "linux"
+  kind     = "linux"
   reserved = true
 }
 
+# App service using local reference
 resource "azurerm_app_service" "app" {
   name                = var.app_service_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = local.resource_group.location
+  resource_group_name = local.resource_group.name
   app_service_plan_id = azurerm_app_service_plan.asp.id
 
   site_config {
