@@ -33,27 +33,25 @@ locals {
 }
 
 # App service plan using local reference
-resource "azurerm_app_service_plan" "asp" {
+resource "azurerm_service_plan" "asp" {
   name                = var.app_service_plan_name
   location            = local.resource_group.location
   resource_group_name = local.resource_group.name
-  sku {
-    tier = "Free"
-    size = "F1"
-  }
-  kind     = "linux"
-  reserved = true
+  os_type            = "Linux"
+  sku_name           = "F1"
 }
 
 # App service using local reference
-resource "azurerm_app_service" "app" {
+resource "azurerm_linux_web_app" "app" {
   name                = var.app_service_name
   location            = local.resource_group.location
   resource_group_name = local.resource_group.name
-  app_service_plan_id = azurerm_app_service_plan.asp.id
+  service_plan_id     = azurerm_service_plan.asp.id
 
   site_config {
-    linux_fx_version = "DOTNETCORE|8.0"
+    application_stack {
+      dotnet_version = "8.0"
+    }
   }
 
   app_settings = {
