@@ -12,7 +12,12 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
+data "azurerm_resource_group" "existing_rg" {
+  name = var.resource_group_name
+}
+
 resource "azurerm_resource_group" "rg" {
+  count    = length(data.azurerm_resource_group.existing_rg.id) == 0 ? 1 : 0
   name     = var.resource_group_name
   location = var.location
 }

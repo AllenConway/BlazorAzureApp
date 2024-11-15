@@ -55,22 +55,6 @@ jobs:
       run: terraform init
       working-directory: ./terraform
 
-    - name: Import existing resource group if it exists
-      run: |
-        echo "Checking if resource group exists..."
-        RESOURCE_GROUP_NAME=$(grep 'resource_group_name' terraform.tfvars | cut -d '=' -f2 | tr -d ' "')
-        echo "Resource group name: $RESOURCE_GROUP_NAME"
-        RESOURCE_GROUP_ID=$(az group show --name $RESOURCE_GROUP_NAME --query id --output tsv || echo "")
-        echo "Resource group ID: $RESOURCE_GROUP_ID"
-        if [ -n "$RESOURCE_GROUP_ID" ]; then
-          echo "Importing existing resource group..."
-          terraform import azurerm_resource_group.rg $RESOURCE_GROUP_ID
-          echo "Resource group imported."
-        else
-          echo "Resource group does not exist."
-        fi
-      working-directory: ./terraform
-
     - name: Terraform Apply
       run: terraform apply -auto-approve
       working-directory: ./terraform
