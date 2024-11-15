@@ -68,6 +68,7 @@ resource "azurerm_linux_web_app" "app" {
   service_plan_id     = local.current_service_plan_id
 
   site_config {
+    always_on = false  # Required for Free tier
     application_stack {
       dotnet_version = "8.0"
     }
