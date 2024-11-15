@@ -82,15 +82,23 @@ resource "azurerm_linux_web_app" "app" {
     application_stack {
       dotnet_version = "8.0"
     }
+    health_check_path = "/health"  # Add a health check endpoint in your Blazor app
+  }
+
+  identity {
+    type = "SystemAssigned"
   }
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = "1"
+    "WEBSITE_RUN_FROM_PACKAGE"    = "1"
+    "DOTNET_ENVIRONMENT"          = "Production"
+    "ASPNETCORE_ENVIRONMENT"      = "Production"
   }
 
   lifecycle {
     ignore_changes = [
-      app_settings["WEBSITE_RUN_FROM_PACKAGE"]
+      app_settings["WEBSITE_RUN_FROM_PACKAGE"],
+      tags
     ]
   }
 
