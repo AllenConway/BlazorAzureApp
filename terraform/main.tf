@@ -102,6 +102,6 @@ resource "azurerm_linux_web_app" "app" {
 
 # Final output locals at the end
 locals {
-  service_plan = local.service_plan_exists ? data.azurerm_service_plan.existing[0] : azurerm_service_plan.asp[0]
-  web_app     = local.web_app_exists ? data.azurerm_linux_web_app.existing[0] : azurerm_linux_web_app.app[0]
+  service_plan = local.service_plan_exists ? data.azurerm_service_plan.existing[0] : (length(azurerm_service_plan.asp) > 0 ? azurerm_service_plan.asp[0] : null)
+  web_app     = local.web_app_exists ? data.azurerm_linux_web_app.existing[0] : (length(azurerm_linux_web_app.app) > 0 ? azurerm_linux_web_app.app[0] : null)
 }
