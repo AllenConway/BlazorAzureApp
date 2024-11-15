@@ -84,7 +84,7 @@ jobs:
       run: |
         MAX_RETRIES=10
         RETRY_COUNT=0
-        until curl -sSf https://blazorazurewebapp.azurewebsites.net/.auth/login/aad > /dev/null || [ $RETRY_COUNT -eq $MAX_RETRIES ]
+        until curl -sSf https://blazorazurewebapp.azurewebsites.net || [ $RETRY_COUNT -eq $MAX_RETRIES ]
         do
           echo "Waiting for application to be ready..."
           sleep 10

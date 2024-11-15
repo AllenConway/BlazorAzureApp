@@ -82,8 +82,6 @@ resource "azurerm_linux_web_app" "app" {
     application_stack {
       dotnet_version = "8.0"
     }
-    health_check_path = "/health"  # Add a health check endpoint in your Blazor app
-    health_check_eviction_time_in_min = 10
   }
 
   identity {
