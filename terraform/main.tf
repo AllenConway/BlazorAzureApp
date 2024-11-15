@@ -27,21 +27,8 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
-# Simplified references using single locals block
 locals {
   resource_group = try(data.azurerm_resource_group.existing[0], azurerm_resource_group.rg[0])
-  
-  # Try to get existing service plan, return null if not found
-  existing_service_plan = try(
-    data.azurerm_service_plan.existing[0],
-    null
-  )
-  
-  # Try to get existing web app, return null if not found
-  existing_web_app = try(
-    data.azurerm_linux_web_app.existing[0],
-    null
-  )
 }
 
 # Safe data lookups that won't fail if resources don't exist
@@ -53,17 +40,22 @@ data "azurerm_service_plan" "existing" {
   depends_on = [azurerm_resource_group.rg]
 }
 
+# Modified web app lookup logic
 data "azurerm_linux_web_app" "existing" {
-  count               = try(local.resource_group.name != "", false) ? 1 : 0
+  count = try(data.azurerm_service_plan.existing[0].id != "", false) ? 1 : 0
   name                = var.app_service_name
   resource_group_name = local.resource_group.name
+}
 
-  depends_on = [azurerm_resource_group.rg]
+# Simplified locals for existence checks
+locals {
+  service_plan_exists = try(data.azurerm_service_plan.existing[0].id != "", false)
+  web_app_exists      = try(data.azurerm_linux_web_app.existing[0].id != "", false)
 }
 
 # Create service plan if it doesn't exist
 resource "azurerm_service_plan" "asp" {
-  count               = local.existing_service_plan == null ? 1 : 0
+  count               = local.service_plan_exists ? 0 : 1
   name                = var.app_service_plan_name
   location            = local.resource_group.location
   resource_group_name = local.resource_group.name
@@ -73,11 +65,11 @@ resource "azurerm_service_plan" "asp" {
 
 # Create web app if it doesn't exist
 resource "azurerm_linux_web_app" "app" {
-  count               = local.existing_web_app == null ? 1 : 0
+  count               = local.web_app_exists ? 0 : 1
   name                = var.app_service_name
   location            = local.resource_group.location
   resource_group_name = local.resource_group.name
-  service_plan_id     = local.existing_service_plan != null ? local.existing_service_plan.id : azurerm_service_plan.asp[0].id
+  service_plan_id     = local.service_plan_exists ? data.azurerm_service_plan.existing[0].id : azurerm_service_plan.asp[0].id
 
   site_config {
     application_stack {
@@ -92,6 +84,6 @@ resource "azurerm_linux_web_app" "app" {
 
 # Final resource references for outputs
 locals {
-  service_plan = local.existing_service_plan != null ? local.existing_service_plan : azurerm_service_plan.asp[0]
-  web_app     = local.existing_web_app != null ? local.existing_web_app : azurerm_linux_web_app.app[0]
+  service_plan = local.service_plan_exists ? data.azurerm_service_plan.existing[0] : azurerm_service_plan.asp[0]
+  web_app     = local.web_app_exists ? data.azurerm_linux_web_app.existing[0] : azurerm_linux_web_app.app[0]
 }
