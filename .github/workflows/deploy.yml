@@ -56,21 +56,21 @@ jobs:
       working-directory: ./terraform
 
     - name: Get Terraform Outputs
-      id: tf-outputs
+      id: terraform-outputs
       run: |
+        cd ./terraform
         terraform init
-        echo "RG_NAME=$(terraform output -raw resource_group_name)" >> $GITHUB_ENV
-        echo "APP_PLAN_NAME=$(terraform output -raw app_service_plan_name)" >> $GITHUB_ENV
-        echo "APP_NAME=$(terraform output -raw app_service_name)" >> $GITHUB_ENV
-      working-directory: ./terraform    
+        echo "rg_name=$(terraform output -raw resource_group_name)" >> "$GITHUB_OUTPUT"
+        echo "app_plan_name=$(terraform output -raw app_service_plan_name)" >> "$GITHUB_OUTPUT"
+        echo "app_name=$(terraform output -raw app_service_name)" >> "$GITHUB_OUTPUT"
 
     - name: Terraform Import Resources
       run: |
         # Import App Service Plan
-        terraform import azurerm_service_plan.asp "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${RG_NAME}/providers/Microsoft.Web/serverFarms/${APP_PLAN_NAME}"
+        terraform import azurerm_service_plan.asp "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ steps.terraform-outputs.outputs.rg_name }}/providers/Microsoft.Web/serverFarms/${{ steps.terraform-outputs.outputs.app_plan_name }}"
         
         # Import Web App
-        terraform import azurerm_linux_web_app.app "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${RG_NAME}/providers/Microsoft.Web/sites/${APP_NAME}"
+        terraform import azurerm_linux_web_app.app "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ steps.terraform-outputs.outputs.rg_name }}/providers/Microsoft.Web/sites/${{ steps.terraform-outputs.outputs.app_name }}"
       working-directory: ./terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -98,5 +98,5 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: BlazorAzureWebApp
+        app-name: ${{ steps.terraform-outputs.outputs.app_name }}
         package: ${{ github.workspace }}/publish
