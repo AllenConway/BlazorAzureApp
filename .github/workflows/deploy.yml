@@ -55,21 +55,6 @@ jobs:
       run: terraform init
       working-directory: ./terraform
 
-    - name: Get Terraform Outputs
-      id: terraform-outputs
-      run: |
-        cd ./terraform
-        terraform init
-        # Store the outputs in variables and clean up any terraform formatting
-        RG_NAME=$(terraform output -raw resource_group_name | tr -d '\r\n')
-        APP_PLAN_NAME=$(terraform output -raw app_service_plan_name | tr -d '\r\n')
-        APP_NAME=$(terraform output -raw app_service_name | tr -d '\r\n')
-        
-        # Write to GITHUB_ENV instead of GITHUB_OUTPUT
-        echo "RG_NAME=${RG_NAME}" >> $GITHUB_ENV
-        echo "APP_PLAN_NAME=${APP_PLAN_NAME}" >> $GITHUB_ENV
-        echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
-
     - name: Terraform Plan
       run: terraform plan
       working-directory: ./terraform
@@ -91,5 +76,5 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: ${{ env.APP_NAME }}
+        app-name: 'BlazorAzureWebApp'
         package: ${{ github.workspace }}/publish
