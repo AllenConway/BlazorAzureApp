@@ -55,6 +55,37 @@ jobs:
       run: terraform init
       working-directory: ./terraform
 
+    - name: Get Terraform Outputs
+      id: tf-outputs
+      run: |
+        terraform init
+        echo "RG_NAME=$(terraform output -raw resource_group_name)" >> $GITHUB_ENV
+        echo "APP_PLAN_NAME=$(terraform output -raw app_service_plan_name)" >> $GITHUB_ENV
+        echo "APP_NAME=$(terraform output -raw app_service_name)" >> $GITHUB_ENV
+      working-directory: ./terraform    
+
+    - name: Terraform Import Resources
+      run: |
+        # Import App Service Plan
+        terraform import azurerm_service_plan.asp "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${RG_NAME}/providers/Microsoft.Web/serverFarms/${APP_PLAN_NAME}"
+        
+        # Import Web App
+        terraform import azurerm_linux_web_app.app "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${RG_NAME}/providers/Microsoft.Web/sites/${APP_NAME}"
+      working-directory: ./terraform
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: ./terraform
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
     - name: Terraform Apply
       run: terraform apply -auto-approve
       working-directory: ./terraform
