@@ -65,6 +65,7 @@ jobs:
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Terraform Apply
+      id: terraform-apply
       run: terraform apply -auto-approve
       working-directory: ./terraform
       env:
@@ -73,10 +74,16 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Get Terraform Outputs
+      id: terraform-outputs
+      run: |
+        echo "APP_NAME=$(terraform output -raw app_service_name)" >> $GITHUB_ENV
+      working-directory: ./terraform
+
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'BlazorAzureWebApp'
+        app-name: blazorazurewebapp
         slot-name: 'production'
         package: ${{ github.workspace }}/publish
 
