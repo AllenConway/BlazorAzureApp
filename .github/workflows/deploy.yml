@@ -53,7 +53,7 @@ jobs:
 
     - name: Import existing resource group if it exists
       run: |
-        RESOURCE_GROUP_NAME=$(terraform output -raw resource_group_name)
+        RESOURCE_GROUP_NAME=$(grep 'resource_group_name' terraform.tfvars | cut -d '=' -f2 | tr -d ' "')
         RESOURCE_GROUP_ID=$(az group show --name $RESOURCE_GROUP_NAME --query id --output tsv || echo "")
         if [ -n "$RESOURCE_GROUP_ID" ]; then
           terraform import azurerm_resource_group.rg $RESOURCE_GROUP_ID
