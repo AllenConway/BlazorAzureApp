@@ -77,9 +77,8 @@ jobs:
     - name: Get Terraform Outputs
       id: terraform-outputs
       run: |
-        APP_NAME=$(terraform output -raw app_service_name | tr -d '"' | tr -d '\n')
-        echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
-        echo "Using app name: ${APP_NAME}"
+        echo "APP_NAME=$(terraform output -raw app_service_name)" >> $GITHUB_ENV
+        echo "Using app name: ${{ env.APP_NAME }}"
       working-directory: ./terraform
 
     - name: Deploy to Azure Web App
