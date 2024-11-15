@@ -82,6 +82,15 @@ resource "azurerm_linux_web_app" "app" {
     application_stack {
       dotnet_version = "8.0"
     }
+
+    # These settings help with Blazor apps
+    websockets_enabled = true  # Needed for Blazor Server
+    http2_enabled = true      # Better performance for Blazor WebAssembly
+    minimum_tls_version = "1.2"
+    cors {
+      allowed_origins = ["*"]
+      support_credentials = false
+    }
   }
 
   identity {
@@ -92,6 +101,9 @@ resource "azurerm_linux_web_app" "app" {
     "WEBSITE_RUN_FROM_PACKAGE"    = "1"
     "DOTNET_ENVIRONMENT"          = "Production"
     "ASPNETCORE_ENVIRONMENT"      = "Production"
+    # Add these for better Blazor performance
+    "ASPNETCORE_FORWARDEDHEADERS_ENABLED" = "true"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"      = "true"
   }
 
   lifecycle {

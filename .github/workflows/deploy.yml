@@ -77,13 +77,15 @@ jobs:
     - name: Get Terraform Outputs
       id: terraform-outputs
       run: |
-        echo "APP_NAME=$(terraform output -raw app_service_name)" >> $GITHUB_ENV
+        APP_NAME=$(terraform output -raw app_service_name | tr -d '"' | tr -d '\n')
+        echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
+        echo "Using app name: ${APP_NAME}"
       working-directory: ./terraform
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: blazorazurewebapp
+        app-name: ${{ env.APP_NAME }}
         slot-name: 'production'
         package: ${{ github.workspace }}/publish
 
