@@ -91,9 +91,9 @@ jobs:
       run: |
         APP_URL="https://blazorazurewebapp.azurewebsites.net"
         echo "Waiting for application to warm up..."
-        sleep 30  # Initial wait for app to start
+        sleep 60  # Increased initial wait time
         
-        MAX_RETRIES=5
+        MAX_RETRIES=10  # Increased retries
         RETRY_COUNT=0
         
         until curl -sSf "$APP_URL" > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]
@@ -105,5 +105,6 @@ jobs:
         
         if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
           echo "Deployment verification failed after $MAX_RETRIES attempts"
+          curl -v "$APP_URL"  # Add verbose output on failure
           exit 1
         fi
