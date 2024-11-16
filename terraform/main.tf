@@ -93,6 +93,8 @@ resource "azurerm_linux_web_app" "app" {
     websockets_enabled = true  # Needed for Blazor Server
     http2_enabled = true      # Better performance for Blazor WebAssembly
     minimum_tls_version = "1.2"
+    use_32_bit_worker = true  # Required for Free tier
+    
     cors {
       allowed_origins = ["*"]
       support_credentials = false
@@ -104,12 +106,16 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE"    = "1"
-    "DOTNET_ENVIRONMENT"          = "Production"
-    "ASPNETCORE_ENVIRONMENT"      = "Production"
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "true"
+    "WEBSITE_RUN_FROM_PACKAGE"           = ""    # Change this to empty string instead of "0"
+    "DOTNET_ENVIRONMENT"                 = "Production"
+    "ASPNETCORE_ENVIRONMENT"             = "Production"
     # Add these for better Blazor performance
     "ASPNETCORE_FORWARDEDHEADERS_ENABLED" = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT"      = "true"
+    "ASPNETCORE_URLS"                    = "http://0.0.0.0:8080"
+    "WEBSITE_WEBDEPLOY_USE_SCM" = "false"    # Add this setting
+    "WEBSITES_PORT"             = "8080"      # Add this setting to match ASPNETCORE_URLS
   }
 
   lifecycle {
