@@ -76,28 +76,23 @@ jobs:
 
     - name: Get Terraform Outputs
       id: terraform-outputs
+      working-directory: ./terraform
       run: |
-        APP_NAME=$(terraform -chdir=./terraform output -raw app_service_name || echo "")
-        if [ -z "$APP_NAME" ]; then
-          echo "Failed to get app_service_name from Terraform output"
-          exit 1
-        fi
-        echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-        echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
-        echo "Retrieved app name: $APP_NAME"
+        echo "app_name=$(terraform output -raw app_service_name)" >> "$GITHUB_OUTPUT"
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ steps.terraform-outputs.outputs.app_name }}
-        slot-name: 'production'
         package: ${{ github.workspace }}/publish
 
     - name: Check deployment status
       run: |
+        APP_URL="https://${{ steps.terraform-outputs.outputs.app_name }}.azurewebsites.net"
+        echo "Checking deployment at $APP_URL"
         MAX_RETRIES=10
         RETRY_COUNT=0
-        until curl -sSf https://blazorazurewebapp.azurewebsites.net || [ $RETRY_COUNT -eq $MAX_RETRIES ]
+        until curl -sSf "$APP_URL" || [ $RETRY_COUNT -eq $MAX_RETRIES ]
         do
           echo "Waiting for application to be ready..."
           sleep 10
