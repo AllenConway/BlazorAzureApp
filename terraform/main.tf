@@ -17,20 +17,24 @@ data "azurerm_subscription" "current" {}
 
 # Check if the Resource Group exists
 data "azurerm_resource_group" "existing_rg" {
-  count = try(data.azurerm_subscription.current.id != "", false) ? 1 : 0
+  count = var.resource_group_name != "" ? 1 : 0
   name  = var.resource_group_name
 }
 
 # Create Resource Group if it doesn't exist
 resource "azurerm_resource_group" "rg" {
-  count    = try(data.azurerm_resource_group.existing_rg[0].id != "", false) ? 0 : 1
   name     = var.resource_group_name
   location = var.location
+
+  lifecycle {
+    prevent_destroy = false
+  }
 }
 
-# Local variable for Resource Group
+# Local variable for Resource Group - simplified
 locals {
-  resource_group = try(data.azurerm_resource_group.existing_rg[0], azurerm_resource_group.rg[0])
+  resource_group_id = try(data.azurerm_resource_group.existing_rg[0].id, azurerm_resource_group.rg.id)
+  resource_group = azurerm_resource_group.rg
 }
 
 # Check if the App Service Plan exists
