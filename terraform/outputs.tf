@@ -13,3 +13,7 @@ output "app_service_plan_name" {
 output "resource_group_name" {
   value = data.azurerm_resource_group.rg.name
 }
+
+output "app_service_plan_id" {
+  value = data.azurerm_service_plan.asp.id
+}
