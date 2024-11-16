@@ -16,30 +16,22 @@ data "azurerm_resource_group" "existing_rg" {
   name = var.resource_group_name
 }
 
-resource "azurerm_resource_group" "rg" {
-  count    = length(data.azurerm_resource_group.existing_rg.name) == 0 ? 1 : 0
-  name     = var.resource_group_name
-  location = var.location
-}
-
-// Define local variables for resource group
-locals {
-  resource_group_name     = length(data.azurerm_resource_group.existing_rg) == 1 ? data.azurerm_resource_group.existing_rg.name : azurerm_resource_group.rg[0].name
-  resource_group_location = length(data.azurerm_resource_group.existing_rg) == 1 ? data.azurerm_resource_group.existing_rg.location : azurerm_resource_group.rg[0].location
+data "azurerm_resource_group" "rg" {
+  name = var.resource_group_name
 }
 
 resource "azurerm_service_plan" "asp" {
   name                = var.app_service_plan_name
-  location            = local.resource_group_location
-  resource_group_name = local.resource_group_name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
   os_type             = "Linux"
   sku_name            = "F1"
 }
 
 resource "azurerm_linux_web_app" "app" {
   name                = var.app_service_name
-  location            = local.resource_group_location
-  resource_group_name = local.resource_group_name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
   service_plan_id     = azurerm_service_plan.asp.id
 
   site_config {
@@ -79,7 +71,6 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   depends_on = [
-    azurerm_resource_group.rg,
     azurerm_service_plan.asp
   ]
 }
