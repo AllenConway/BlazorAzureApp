@@ -65,7 +65,6 @@ jobs:
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Terraform Apply
-      id: terraform-apply
       run: terraform apply -auto-approve
       working-directory: ./terraform
       env:
@@ -74,21 +73,15 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Get Terraform Outputs
-      id: terraform-outputs
-      working-directory: ./terraform
-      run: |
-        echo "app_name=$(terraform output -raw app_service_name)" >> "$GITHUB_OUTPUT"
-
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: ${{ steps.terraform-outputs.outputs.app_name }}
+        app-name: 'BlazorAzureWebApp'
         package: ${{ github.workspace }}/publish
 
     - name: Check deployment status
       run: |
-        APP_URL="https://${{ steps.terraform-outputs.outputs.app_name }}.azurewebsites.net"
+        APP_URL="https://BlazorAzureWebApp.azurewebsites.net"
         echo "Checking deployment at $APP_URL"
         MAX_RETRIES=10
         RETRY_COUNT=0
