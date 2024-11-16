@@ -27,7 +27,7 @@ resource "azurerm_service_plan" "asp" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   os_type            = "Linux"
-  sku_name           = "F1"
+  sku_name           = "B1"  # Changed from F1 to B1
 }
 
 # Create Web App
@@ -36,22 +36,14 @@ resource "azurerm_linux_web_app" "app" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   service_plan_id     = azurerm_service_plan.asp.id
+  https_only          = true
 
   site_config {
-    always_on = false
+    always_on = true  # B1 tier supports always_on
     application_stack {
       dotnet_version = "8.0"
     }
-
-    websockets_enabled = true
-    http2_enabled = true
     minimum_tls_version = "1.2"
-    use_32_bit_worker = true
-    
-    cors {
-      allowed_origins = ["*"]
-      support_credentials = false
-    }
   }
 
   identity {
@@ -60,14 +52,9 @@ resource "azurerm_linux_web_app" "app" {
 
   app_settings = {
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "true"
-    "WEBSITE_RUN_FROM_PACKAGE"           = "1"    # Change this back to "1"
-    "DOTNET_ENVIRONMENT"                 = "Production"
+    "WEBSITE_RUN_FROM_PACKAGE"           = "1"
     "ASPNETCORE_ENVIRONMENT"             = "Production"
-    # Add these for better Blazor performance
-    "ASPNETCORE_FORWARDEDHEADERS_ENABLED" = "true"
-    "SCM_DO_BUILD_DURING_DEPLOYMENT"      = "true"
-    "ASPNETCORE_URLS"                    = "http://0.0.0.0:8080"
-    "WEBSITES_PORT"             = "8080"      # Add this setting to match ASPNETCORE_URLS
+    "WEBSITES_PORT"                      = "80"  # Changed to standard port
   }
 
   lifecycle {
