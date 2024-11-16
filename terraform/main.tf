@@ -89,14 +89,10 @@ resource "azurerm_linux_web_app" "app" {
       dotnet_version = "8.0"
     }
 
-    # These settings help with Blazor apps
-    websockets_enabled = true  # Needed for Blazor Server
-    http2_enabled = true      # Better performance for Blazor WebAssembly
+    websockets_enabled = true
+    http2_enabled = true
     minimum_tls_version = "1.2"
-    use_32_bit_worker = true  # Required for Free tier
-
-    # Add health check path
-    health_check_path = "/health"
+    use_32_bit_worker = true
     
     cors {
       allowed_origins = ["*"]
