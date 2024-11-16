@@ -63,6 +63,17 @@ jobs:
       run: terraform init
       working-directory: ./terraform
 
+    - name: Make import script executable
+      run: chmod +x ./terraform/import.sh
+      
+    - name: Import existing resources
+      run: ./import.sh ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      working-directory: ./terraform
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
     - name: Terraform Plan
       run: terraform plan
       working-directory: ./terraform
