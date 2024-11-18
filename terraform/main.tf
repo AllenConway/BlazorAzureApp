@@ -15,35 +15,88 @@ provider "azurerm" {
 # Data source for subscription
 data "azurerm_subscription" "current" {}
 
-# Create Resource Group
+# Check if the Resource Group exists
+data "azurerm_resource_group" "existing_rg" {
+  count = try(data.azurerm_subscription.current.id != "", false) ? 1 : 0
+  name  = var.resource_group_name
+}
+
+# Create Resource Group if it doesn't exist
 resource "azurerm_resource_group" "rg" {
+  count    = try(data.azurerm_resource_group.existing_rg[0].id != "", false) ? 0 : 1
   name     = var.resource_group_name
   location = var.location
 }
 
-# Create App Service Plan
-resource "azurerm_service_plan" "asp" {
-  name                = var.app_service_plan_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  os_type            = "Linux"
-  sku_name           = "B1"  # Changed from F1 to B1
+# Local variable for Resource Group
+locals {
+  resource_group = try(data.azurerm_resource_group.existing_rg[0], azurerm_resource_group.rg[0])
 }
 
-# Create Web App
-resource "azurerm_linux_web_app" "app" {
+# Check if the App Service Plan exists
+data "azurerm_service_plan" "existing_asp" {
+  count               = try(local.resource_group.name != "", false) ? 1 : 0
+  name                = var.app_service_plan_name
+  resource_group_name = local.resource_group.name
+  depends_on          = [local.resource_group]
+}
+
+# Determine if the App Service Plan exists
+locals {
+  service_plan_exists = try(data.azurerm_service_plan.existing_asp[0].id != "", false)
+}
+
+# Create App Service Plan if it doesn't exist
+resource "azurerm_service_plan" "asp" {
+  count               = local.service_plan_exists ? 0 : 1
+  name                = var.app_service_plan_name
+  location            = local.resource_group.location
+  resource_group_name = local.resource_group.name
+  os_type             = "Linux"
+  sku_name            = "F1"
+  depends_on          = [local.resource_group]
+}
+
+# Local variable for current Service Plan ID
+locals {
+  current_service_plan_id = local.service_plan_exists ? data.azurerm_service_plan.existing_asp[0].id : azurerm_service_plan.asp[0].id
+}
+
+# Check if the Web App exists
+data "azurerm_linux_web_app" "existing_app" {
+  count               = try(local.resource_group.name != "", false) ? 1 : 0
   name                = var.app_service_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  service_plan_id     = azurerm_service_plan.asp.id
-  https_only          = true
+  resource_group_name = local.resource_group.name
+  depends_on          = [local.resource_group]
+}
+
+# Determine if the Web App exists
+locals {
+  web_app_exists = try(data.azurerm_linux_web_app.existing_app[0].id != "", false)
+}
+
+# Create Web App if it doesn't exist
+resource "azurerm_linux_web_app" "app" {
+  count               = local.web_app_exists ? 0 : 1
+  name                = var.app_service_name
+  location            = local.resource_group.location
+  resource_group_name = local.resource_group.name
+  service_plan_id     = local.current_service_plan_id
 
   site_config {
-    always_on = true  # B1 tier supports always_on
+    always_on = false
     application_stack {
       dotnet_version = "8.0"
     }
+
+    # These settings help with Blazor apps
+    websockets_enabled = true  # Needed for Blazor Server
+    http2_enabled = true      # Better performance for Blazor WebAssembly
     minimum_tls_version = "1.2"
+    cors {
+      allowed_origins = ["*"]
+      support_credentials = false
+    }
   }
 
   identity {
@@ -51,10 +104,12 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   app_settings = {
-    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "true"
-    "WEBSITE_RUN_FROM_PACKAGE"           = "1"
-    "ASPNETCORE_ENVIRONMENT"             = "Production"
-    "WEBSITES_PORT"                      = "80"  # Changed to standard port
+    "WEBSITE_RUN_FROM_PACKAGE"    = "1"
+    "DOTNET_ENVIRONMENT"          = "Production"
+    "ASPNETCORE_ENVIRONMENT"      = "Production"
+    # Add these for better Blazor performance
+    "ASPNETCORE_FORWARDEDHEADERS_ENABLED" = "true"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT"      = "true"
   }
 
   lifecycle {
@@ -65,6 +120,12 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   depends_on = [
+    local.resource_group,
     azurerm_service_plan.asp
   ]
+}
+
+# Local variable for current Web App
+locals {
+  web_app = local.web_app_exists ? data.azurerm_linux_web_app.existing_app[0] : azurerm_linux_web_app.app[0]
 }
