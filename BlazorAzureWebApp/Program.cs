@@ -8,6 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("blazorazurewebapp.azurewebsites.net") });
 
 var app = builder.Build();
 
