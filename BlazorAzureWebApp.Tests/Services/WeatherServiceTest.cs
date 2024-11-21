@@ -3,18 +3,27 @@ using NUnit.Framework;
 using BlazorAzureWebApp.Services;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Net.Http;
 
 namespace BlazorAzureWebApp.Tests.Services
 {
     [TestFixture]
     public class WeatherServiceTest
     {
-        private WeatherService _weatherService;
+        private WeatherService _weatherService = default!;
+        private HttpClient _httpClient = default!;
 
         [SetUp]
         public void Setup()
         {
-            _weatherService = new WeatherService();
+            _httpClient = new HttpClient();
+            _weatherService = new WeatherService(_httpClient);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _httpClient?.Dispose();
         }
 
         [Test]

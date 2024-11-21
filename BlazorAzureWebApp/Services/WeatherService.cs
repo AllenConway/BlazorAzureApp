@@ -1,11 +1,19 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace BlazorAzureWebApp.Services
 {
     public class WeatherService
     {
+
+        private readonly HttpClient http;
+        public WeatherService(HttpClient http)
+        {
+            this.http = http;
+        }
+
         public async Task<WeatherForecast[]> GetForecastsAsync()
         {
             await Task.Delay(500); // Simulate asynchronous loading
